@@ -2,6 +2,8 @@
 """
 Created on Sat Jun 22 21:24:42 2019
 
+PyTorch neural network based stochastic gradient descent to optimize a similarity matrix for peptide binding affinity
+
 @author: dhyla
 """
 
@@ -64,9 +66,7 @@ class Net(nn.Module):
         return (abs(x))
 
 model = Net()
-
 loss_fn = torch.nn.SmoothL1Loss(size_average=False)
-
 optimizer = optim.Adam(model.parameters(), lr=1e-5)
 
 # file input
@@ -79,16 +79,13 @@ model.train()
 # train, test split
 train_data, test_data = train_test_split(data, test_size=0.2)
 
+# Calculates and optimizes a similarity matrix using NNs
 num_epochs = 5
 for epoch in range(num_epochs):
-    for i in range(100):
+    for i in range(len(data)):
         pepTuple = findPair(train_data)
         pep1 = pepTuple[0]
         pep2 = pepTuple[1]
-#        simMat = calcSim(preSim)
-#        mask = Var(torch.Tensor(np.dot(oneHotter(pep1), np.transpose(oneHotter(pep2)))).cuda(), requires_grad=False) # create mask to apply on similarity matrix
-#        hotmask = mask * simMat
-#        pss = torch.sum(hotmask)
         y1 = np.round(train_data.binding_affinity[train_data.index == pep1].iloc[0],decimals=4)
         y2 = np.round(train_data.binding_affinity[train_data.index == pep2].iloc[0],decimals=4)
         if y1 - y2 == 0:  # max case
