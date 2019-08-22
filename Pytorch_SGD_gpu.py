@@ -2,6 +2,8 @@
 """
 Created on Tue Apr 23 01:21:01 2019
 
+Use PyTorch cuda based stochastic gradient descent to optimize a similarity matrix for peptide binding affinity
+
 @author: dhyla
 """
 import os
@@ -68,7 +70,7 @@ def calcSim(preSim):
     simMat.data = (simMat.data - simMat.min().data) / (simMat.max().data - simMat.min().data) * 2 - 1  #normalize the similarity matrix --> to get [-1,1]
     return simMat
 
-''' gradient descent '''
+''' gradient descent and use gpu'''
 torch.cuda.set_device(0)
 preSim = Var(torch.randn(20,1).cuda(), requires_grad=True)
 preSim_cuda = preSim.cuda()
@@ -80,6 +82,7 @@ exponent_cuda = exponent.cuda()
 optimizer = optim.Adam([preSim]+[constant]+[exponent],lr=1e-3,weight_decay=0.1)
 loss_fn = nn.SmoothL1Loss()
 
+''' iterate through data and calculate/update the similarity matrix, degree of equation and constant'''
 mse_epochwise = []
 epoch = 1
 while epoch <= 1:
@@ -114,18 +117,18 @@ while epoch <= 1:
 ''' All graphing stuff '''
 
 #print(bestsim.data) # show bestmodel
-bestsimfig = sns.heatmap(bestSim.data.cpu(), xticklabels = AA, yticklabels = AA)#visualize
+bestsimfig = sns.heatmap(bestSim.data.cpu(), xticklabels = AA, yticklabels = AA)
 fig = bestsimfig.get_figure()
-fig.savefig(dirname + '/Plots/bestSim_nonlinear_allvars.png')
+fig.savefig(dirname + '/Plots SimMat/bestSim_nonlinear_allvars.png')
 #plt.show()
 plt.close()
 np.savetxt('best_sim_nonlinear_allvars.txt',np.asarray(bestSim.data.cpu()),delimiter='\t')
 
 newsimmat = simMat #last iteration model
 np.savetxt('new_sim_nonlinear_allvars.txt',np.asarray(newsimmat.data.cpu()),delimiter='\t')
-newsimfig = sns.heatmap(newsimmat.data.cpu(), xticklabels = AA, yticklabels = AA)#visualize
+newsimfig = sns.heatmap(newsimmat.data.cpu(), xticklabels = AA, yticklabels = AA)
 fignewsim = newsimfig.get_figure()
-fignewsim.savefig(dirname + '/Plots/newSim_nonlinear_allvars.png')
+fignewsim.savefig(dirname + '/Plots SimMat/newSim_nonlinear_allvars.png')
 #plt.show()
 plt.close()
 
@@ -133,7 +136,7 @@ extra = plt.scatter(x = np.linspace(0, len(mse_epochwise),num = len(mse_epochwis
 plt.xlabel(xlabel = 'iterations')
 plt.ylabel(ylabel = 'Mean Squared Error')
 plt.ylim(0, max(mse_epochwise))
-plt.savefig(dirname + '/Plots/MSE_nonlinear_allvars.png')
+plt.savefig(dirname + '/Plots SimMat/MSE_nonlinear_allvars.png')
 #plt.show()
 plt.close()
 
